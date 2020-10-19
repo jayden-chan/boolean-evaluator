@@ -26,21 +26,20 @@ pub fn tokenize<'a>(
             "v" => tokens.push(Token::LogicalOr),
             "&" => tokens.push(Token::LogicalAnd),
             "~" => tokens.push(Token::LogicalNot),
-            "-" => match input.get(i + 1..i + 2) {
-                None => {
-                    return Err(format!(
-                        "Unexpected end of input at index {}",
-                        i + 2
-                    ))
-                }
-                Some(c) => {
-                    if c == ">" {
-                        tokens.push(Token::LogicalImp)
-                    } else {
-                        return Err(format!("Unexpected token {} at position {}. Expected \">\"", c, i+2));
+            "-" => {
+                match input.get(i + 1..i + 2) {
+                    None => {
+                        return Err(format!(
+                            "Unexpected end of input at index {}",
+                            i + 2
+                        ))
+                    }
+                    Some(c) if c == ">" => tokens.push(Token::LogicalImp),
+                    Some(c) => {
+                        return Err(format!("Unexpected token '{}' at position {}. Expected '>'", c, i+2));
                     }
                 }
-            },
+            }
             "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K"
             | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
             | "V" | "W" | "X" | "Y" | "Z" => {
