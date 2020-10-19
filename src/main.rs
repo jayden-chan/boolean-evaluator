@@ -1,46 +1,15 @@
 mod evaluator;
+mod parser;
 
-use evaluator::evaluate;
+use evaluator::{evaluate, Expr, Operator};
+use parser::tokenize;
 use std::collections::HashMap;
 
-#[derive(Clone)]
-pub enum Token {
-    OpenParen,
-    ClosedParen,
-    LogicalOr,
-    LogicalAnd,
-    LogicalImp,
-    LogicalNot,
-    Variable(String),
-}
-
-#[derive(Copy, Clone)]
-pub enum Operator {
-    And,
-    Or,
-    Imp,
-}
-
-pub enum Expr<'a> {
-    SubExpr {
-        l: &'a Expr<'a>,
-        o: Operator,
-        r: &'a Expr<'a>,
-    },
-    Variable(&'a str),
-    Not(&'a Expr<'a>),
-}
-
-fn main() {
-    let my_expr = Expr::SubExpr {
-        l: &Expr::Not(&Expr::Variable("A")),
-        o: Operator::And,
-        r: &Expr::Variable("B"),
-    };
-
-    let mut vars = HashMap::new();
-    vars.insert("A", false);
-    vars.insert("B", true);
-
-    println!("{:#?}", evaluate(&my_expr, &vars));
+fn main() -> Result<(), String> {
+    let str_expr = "(A -> B) & (A v B)";
+    println!("Expr: {}", str_expr);
+    let (tokens, variables) = tokenize(str_expr)?;
+    println!("{:#?}", tokens);
+    println!("{:#?}", variables);
+    Ok(())
 }

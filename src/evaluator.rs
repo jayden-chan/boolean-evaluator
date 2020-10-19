@@ -1,5 +1,21 @@
-use crate::{Expr, Operator};
 use std::collections::HashMap;
+
+#[derive(Copy, Clone)]
+pub enum Operator {
+    And,
+    Or,
+    Imp,
+}
+
+pub enum Expr<'a> {
+    SubExpr {
+        l: &'a Expr<'a>,
+        o: Operator,
+        r: &'a Expr<'a>,
+    },
+    Variable(&'a str),
+    Not(&'a Expr<'a>),
+}
 
 pub fn evaluate<'a>(
     expr: &'a Expr,
@@ -76,8 +92,17 @@ mod tests {
 
     #[test]
     fn test_nested_sub_expr() {
+        // ~(A v (D -> R)) & (~~B -> C)
         let expr = Expr::SubExpr {
-            l: &Expr::Not(&Expr::Variable("A")),
+            l: &Expr::Not(&Expr::SubExpr {
+                l: &Expr::Variable("A"),
+                o: Operator::Or,
+                r: &Expr::SubExpr {
+                    l: &Expr::Variable("D"),
+                    o: Operator::Imp,
+                    r: &Expr::Variable("R"),
+                },
+            }),
             o: Operator::And,
             r: &Expr::SubExpr {
                 l: &Expr::Not(&Expr::Not(&Expr::Variable("B"))),
@@ -90,6 +115,8 @@ mod tests {
         vars.insert("A", false);
         vars.insert("B", true);
         vars.insert("C", false);
+        vars.insert("D", false);
+        vars.insert("R", false);
         assert_eq!(evaluate(&expr, &vars), Ok(false));
     }
 }
