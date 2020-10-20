@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Token<'a> {
     OpenParen,
     ClosedParen,
@@ -30,10 +30,10 @@ impl<'a> From<&'a str> for Token<'a> {
 
 pub fn shunting_yard<'a>(
     input: &'a str,
-) -> Result<(Vec<Token<'a>>, HashSet<&'a str>), String> {
+    variables: &mut HashSet<&'a str>,
+) -> Result<Vec<Token<'a>>, String> {
     let mut output = Vec::new();
     let mut operator_stack = Vec::new();
-    let mut variables = HashSet::new();
 
     for i in 0..input.len() {
         let curr_char = input.get(i..i + 1).unwrap();
@@ -42,7 +42,7 @@ pub fn shunting_yard<'a>(
                 while let Some(t) = operator_stack.last() {
                     if curr_char != "~" && *t == Token::OpenParen {
                         break;
-                    } else if curr_char == "~" && *t == Token::LogicalNot {
+                    } else if curr_char == "~" && *t != Token::LogicalNot {
                         break;
                     }
                     output.push(operator_stack.pop().unwrap());
@@ -90,7 +90,7 @@ pub fn shunting_yard<'a>(
         output.push(t);
     }
 
-    Ok((output, variables))
+    Ok(output)
 }
 
 #[cfg(test)]
@@ -100,9 +100,10 @@ mod tests {
     #[test]
     fn test_single_var() {
         let expr = "A";
-        let result = shunting_yard(expr);
+        let mut vars = HashSet::new();
+        let result = shunting_yard(expr, &mut vars);
         assert!(result.is_ok());
-        let (tokens, vars) = result.unwrap();
+        let tokens = result.unwrap();
         assert_eq!(tokens, vec![Token::Variable("A")]);
         assert!(vars.contains("A"));
         assert_eq!(vars.len(), 1);
@@ -111,9 +112,10 @@ mod tests {
     #[test]
     fn test_simple_expr1() {
         let expr = "A -> B";
-        let result = shunting_yard(expr);
+        let mut vars = HashSet::new();
+        let result = shunting_yard(expr, &mut vars);
         assert!(result.is_ok());
-        let (tokens, vars) = result.unwrap();
+        let tokens = result.unwrap();
         assert_eq!(
             tokens,
             vec![
@@ -130,9 +132,10 @@ mod tests {
     #[test]
     fn test_simple_expr2() {
         let expr = "A v B";
-        let result = shunting_yard(expr);
+        let mut vars = HashSet::new();
+        let result = shunting_yard(expr, &mut vars);
         assert!(result.is_ok());
-        let (tokens, vars) = result.unwrap();
+        let tokens = result.unwrap();
         assert_eq!(
             tokens,
             vec![Token::Variable("A"), Token::Variable("B"), Token::LogicalOr]
@@ -145,9 +148,10 @@ mod tests {
     #[test]
     fn test_simple_expr3() {
         let expr = "C & D";
-        let result = shunting_yard(expr);
+        let mut vars = HashSet::new();
+        let result = shunting_yard(expr, &mut vars);
         assert!(result.is_ok());
-        let (tokens, vars) = result.unwrap();
+        let tokens = result.unwrap();
         assert_eq!(
             tokens,
             vec![
@@ -162,16 +166,39 @@ mod tests {
     }
 
     #[test]
+    fn test_arrow_not() {
+        let expr = "A -> ~B";
+        let mut vars = HashSet::new();
+        let result = shunting_yard(expr, &mut vars);
+        assert!(result.is_ok());
+        let tokens = result.unwrap();
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Variable("A"),
+                Token::Variable("B"),
+                Token::LogicalNot,
+                Token::LogicalImp
+            ]
+        );
+        assert!(vars.contains("A"));
+        assert!(vars.contains("B"));
+        assert_eq!(vars.len(), 2);
+    }
+
+    #[test]
     fn test_invalid_imp() {
         let expr = "C - > D";
-        let result = shunting_yard(expr);
+        let mut vars = HashSet::new();
+        let result = shunting_yard(expr, &mut vars);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_invalid_char() {
         let expr = "C -> ?";
-        let result = shunting_yard(expr);
+        let mut vars = HashSet::new();
+        let result = shunting_yard(expr, &mut vars);
         assert!(result.is_err());
     }
 }

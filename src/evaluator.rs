@@ -2,15 +2,15 @@ use crate::parser::Token;
 use std::collections::HashMap;
 
 pub fn evaluate_postfix<'a>(
-    expr: Vec<Token>,
+    expr: &Vec<Token>,
     vars: &HashMap<&str, bool>,
 ) -> Result<bool, String> {
-    let mut operand_stack = Vec::new();
+    let mut operand_stack: Vec<Token> = Vec::new();
 
     for t in expr {
         match t {
             // Wow, this is kind of McFucked but I have no idea how else to write it
-            Token::Value(_) | Token::Variable(_) => operand_stack.push(t),
+            Token::Value(_) | Token::Variable(_) => operand_stack.push(*t),
             Token::LogicalOr | Token::LogicalAnd | Token::LogicalImp => {
                 let (left_value, right_value) = match (operand_stack.pop(), operand_stack.pop()) {
                     (Some(Token::Variable(r)), Some(Token::Variable(l))) => {
@@ -83,7 +83,7 @@ mod tests {
         vars.insert("A", true);
         vars.insert("B", false);
 
-        let result = evaluate_postfix(expr, &vars);
+        let result = evaluate_postfix(&expr, &vars);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);
     }
@@ -100,7 +100,7 @@ mod tests {
         vars.insert("A", true);
         vars.insert("B", false);
 
-        let result = evaluate_postfix(expr, &vars);
+        let result = evaluate_postfix(&expr, &vars);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), false);
     }
@@ -117,7 +117,7 @@ mod tests {
         vars.insert("A", true);
         vars.insert("B", false);
 
-        let result = evaluate_postfix(expr, &vars);
+        let result = evaluate_postfix(&expr, &vars);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), false);
     }
@@ -134,7 +134,7 @@ mod tests {
         vars.insert("A", true);
         vars.insert("B", true);
 
-        let result = evaluate_postfix(expr, &vars);
+        let result = evaluate_postfix(&expr, &vars);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), true);
     }
@@ -152,7 +152,7 @@ mod tests {
         vars.insert("A", true);
         vars.insert("B", true);
 
-        let result = evaluate_postfix(expr, &vars);
+        let result = evaluate_postfix(&expr, &vars);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), false);
     }
@@ -174,7 +174,7 @@ mod tests {
         vars.insert("B", true);
         vars.insert("C", true);
 
-        let result = evaluate_postfix(expr, &vars);
+        let result = evaluate_postfix(&expr, &vars);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), false);
     }
