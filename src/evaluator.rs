@@ -9,6 +9,7 @@ pub fn evaluate_postfix<'a>(
 
     for t in expr {
         match t {
+            // Wow, this is kind of McFucked but I have no idea how else to write it
             Token::Value(_) | Token::Variable(_) => operand_stack.push(t),
             Token::LogicalOr | Token::LogicalAnd | Token::LogicalImp => {
                 let (left_value, right_value) = match (operand_stack.pop(), operand_stack.pop()) {
@@ -66,5 +67,115 @@ pub fn evaluate_postfix<'a>(
         None => Err(String::from(
             "Operand stack is empty when it should have one item",
         )),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_basic_or() {
+        // A v B
+        let expr =
+            vec![Token::Variable("A"), Token::Variable("B"), Token::LogicalOr];
+        let mut vars = HashMap::new();
+        vars.insert("A", true);
+        vars.insert("B", false);
+
+        let result = evaluate_postfix(expr, &vars);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
+    }
+
+    #[test]
+    fn test_basic_and() {
+        // A & B
+        let expr = vec![
+            Token::Variable("A"),
+            Token::Variable("B"),
+            Token::LogicalAnd,
+        ];
+        let mut vars = HashMap::new();
+        vars.insert("A", true);
+        vars.insert("B", false);
+
+        let result = evaluate_postfix(expr, &vars);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+
+    #[test]
+    fn test_basic_imp1() {
+        // A -> B
+        let expr = vec![
+            Token::Variable("A"),
+            Token::Variable("B"),
+            Token::LogicalImp,
+        ];
+        let mut vars = HashMap::new();
+        vars.insert("A", true);
+        vars.insert("B", false);
+
+        let result = evaluate_postfix(expr, &vars);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+
+    #[test]
+    fn test_basic_imp2() {
+        // A -> B
+        let expr = vec![
+            Token::Variable("A"),
+            Token::Variable("B"),
+            Token::LogicalImp,
+        ];
+        let mut vars = HashMap::new();
+        vars.insert("A", true);
+        vars.insert("B", true);
+
+        let result = evaluate_postfix(expr, &vars);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), true);
+    }
+
+    #[test]
+    fn test_logical_not() {
+        // A & ~B
+        let expr = vec![
+            Token::Variable("A"),
+            Token::Variable("B"),
+            Token::LogicalNot,
+            Token::LogicalAnd,
+        ];
+        let mut vars = HashMap::new();
+        vars.insert("A", true);
+        vars.insert("B", true);
+
+        let result = evaluate_postfix(expr, &vars);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
+    }
+
+    #[test]
+    fn test_nested_not() {
+        // ~(A v ~(B & C))
+        let expr = vec![
+            Token::Variable("A"),
+            Token::Variable("B"),
+            Token::Variable("C"),
+            Token::LogicalAnd,
+            Token::LogicalNot,
+            Token::LogicalOr,
+            Token::LogicalNot,
+        ];
+        let mut vars = HashMap::new();
+        vars.insert("A", true);
+        vars.insert("B", true);
+        vars.insert("C", true);
+
+        let result = evaluate_postfix(expr, &vars);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), false);
     }
 }
