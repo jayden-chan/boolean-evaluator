@@ -17,12 +17,11 @@ fn main() -> Result<(), String> {
     let str_expr = "A -> ~B";
     let (tokens, variables) = shunting_yard(str_expr)?;
     println!("Expr: {}", str_expr);
-    println!("{:#?}", tokens);
-    println!("{:?}", variables);
 
     let mut vars = HashMap::new();
     vars.insert("A", true);
     vars.insert("B", false);
+    println!("Vars: {:#?}", vars);
     let result = evaluate_postfix(tokens, &vars)?;
     println!("{}", result);
     Ok(())

@@ -38,21 +38,11 @@ pub fn shunting_yard<'a>(
     for i in 0..input.len() {
         let curr_char = input.get(i..i + 1).unwrap();
         match curr_char {
-            "&" | "v" | ">" => {
-                println!("Starting operator pop");
+            "&" | "v" | ">" | "~" => {
                 while let Some(t) = operator_stack.last() {
-                    if *t == Token::OpenParen {
+                    if curr_char != "~" && *t == Token::OpenParen {
                         break;
-                    }
-                    output.push(operator_stack.pop().unwrap());
-                }
-
-                operator_stack.push(curr_char.into())
-            }
-            "~" => {
-                println!("Starting not operator pop");
-                while let Some(t) = operator_stack.last() {
-                    if *t != Token::LogicalNot {
+                    } else if curr_char == "~" && *t == Token::LogicalNot {
                         break;
                     }
                     output.push(operator_stack.pop().unwrap());
@@ -62,7 +52,6 @@ pub fn shunting_yard<'a>(
             }
             "(" => operator_stack.push(Token::OpenParen),
             ")" => {
-                println!("starting close paren pop");
                 while let Some(t) = operator_stack.last() {
                     if *t == Token::OpenParen {
                         break;
@@ -82,15 +71,107 @@ pub fn shunting_yard<'a>(
                 output.push(Token::Variable(curr_char));
                 variables.insert(curr_char);
             }
-            " " | "-" => (),
+            " " => (),
+            "-" => {
+                if let Some(next_char) = input.get(i + 1..i + 2) {
+                    if next_char != ">" {
+                        return Err(format!(
+                            "Expected '>' following '-' char, found '{}'",
+                            next_char
+                        ));
+                    }
+                }
+            }
             _ => return Err(format!("Invalid character '{}'", curr_char)),
         }
     }
 
-    println!("popping all remaining items");
-    while let Some(t) = operator_stack.last() {
-        output.push(operator_stack.pop().unwrap());
+    while let Some(t) = operator_stack.pop() {
+        output.push(t);
     }
 
     Ok((output, variables))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_single_var() {
+        let expr = "A";
+        let result = shunting_yard(expr);
+        assert!(result.is_ok());
+        let (tokens, vars) = result.unwrap();
+        assert_eq!(tokens, vec![Token::Variable("A")]);
+        assert!(vars.contains("A"));
+        assert_eq!(vars.len(), 1);
+    }
+
+    #[test]
+    fn test_simple_expr1() {
+        let expr = "A -> B";
+        let result = shunting_yard(expr);
+        assert!(result.is_ok());
+        let (tokens, vars) = result.unwrap();
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Variable("A"),
+                Token::Variable("B"),
+                Token::LogicalImp
+            ]
+        );
+        assert!(vars.contains("A"));
+        assert!(vars.contains("B"));
+        assert_eq!(vars.len(), 2);
+    }
+
+    #[test]
+    fn test_simple_expr2() {
+        let expr = "A v B";
+        let result = shunting_yard(expr);
+        assert!(result.is_ok());
+        let (tokens, vars) = result.unwrap();
+        assert_eq!(
+            tokens,
+            vec![Token::Variable("A"), Token::Variable("B"), Token::LogicalOr]
+        );
+        assert!(vars.contains("A"));
+        assert!(vars.contains("B"));
+        assert_eq!(vars.len(), 2);
+    }
+
+    #[test]
+    fn test_simple_expr3() {
+        let expr = "C & D";
+        let result = shunting_yard(expr);
+        assert!(result.is_ok());
+        let (tokens, vars) = result.unwrap();
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Variable("C"),
+                Token::Variable("D"),
+                Token::LogicalAnd
+            ]
+        );
+        assert!(vars.contains("C"));
+        assert!(vars.contains("D"));
+        assert_eq!(vars.len(), 2);
+    }
+
+    #[test]
+    fn test_invalid_imp() {
+        let expr = "C - > D";
+        let result = shunting_yard(expr);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_invalid_char() {
+        let expr = "C -> ?";
+        let result = shunting_yard(expr);
+        assert!(result.is_err());
+    }
 }
