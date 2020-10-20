@@ -22,18 +22,17 @@ fn main() -> Result<(), String> {
         return Err(String::from("Must specify a file."));
     }
 
-    let mut exprs: Vec<Vec<Token>> = Vec::new();
-    let mut variables = HashSet::new();
-
     let file = File::open(&args[1]).unwrap();
     let all_lines = io::BufReader::new(file)
         .lines()
-        .filter_map(|e| if e.is_ok() { Some(e.unwrap()) } else { None })
+        .filter_map(|e| e.ok())
         .collect::<Vec<String>>();
 
-    for line in &all_lines {
-        exprs.push(shunting_yard(&line, &mut variables)?);
-    }
+    let mut variables = HashSet::new();
+    let exprs = all_lines
+        .iter()
+        .map(|line| shunting_yard(line, &mut variables).unwrap())
+        .collect::<Vec<Vec<Token>>>();
 
     let mut variables = variables.into_iter().collect::<Vec<&str>>();
     variables.sort();
