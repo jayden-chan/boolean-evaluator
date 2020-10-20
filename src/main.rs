@@ -1,8 +1,8 @@
 mod evaluator;
 mod parser;
 
-use evaluator::{evaluate, Expr, Operator};
-use parser::{shunting_yard, tokenize, Token};
+use evaluator::evaluate_postfix;
+use parser::shunting_yard;
 use std::collections::HashMap;
 
 fn bit_at(num: usize, i: usize) -> bool {
@@ -13,27 +13,17 @@ fn bit_at(num: usize, i: usize) -> bool {
     }
 }
 
-fn format_expr(expr: &Vec<Token>) -> String {
-    let mut ret = String::new();
-    for token in expr {
-        ret.push_str(match token {
-            Token::OpenParen => "(",
-            Token::ClosedParen => ")",
-            Token::LogicalOr => " | ",
-            Token::LogicalAnd => " & ",
-            Token::LogicalImp => " -> ",
-            Token::LogicalNot => "!",
-            Token::Variable(v) => v,
-        });
-    }
-    return ret;
-}
-
 fn main() -> Result<(), String> {
-    let str_expr = "(A -> ~B) & (A v B)";
+    let str_expr = "A -> ~B";
     let (tokens, variables) = shunting_yard(str_expr)?;
-    println!("Expr: {}", format_expr(&tokens));
+    println!("Expr: {}", str_expr);
     println!("{:#?}", tokens);
     println!("{:?}", variables);
+
+    let mut vars = HashMap::new();
+    vars.insert("A", true);
+    vars.insert("B", false);
+    let result = evaluate_postfix(tokens, &vars)?;
+    println!("{}", result);
     Ok(())
 }

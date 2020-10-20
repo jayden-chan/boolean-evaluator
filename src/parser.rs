@@ -9,6 +9,7 @@ pub enum Token<'a> {
     LogicalImp,
     LogicalNot,
     Variable(&'a str),
+    Value(bool),
 }
 
 impl<'a> From<&'a str> for Token<'a> {
@@ -20,6 +21,8 @@ impl<'a> From<&'a str> for Token<'a> {
             "&" => Self::LogicalAnd,
             ">" => Self::LogicalImp,
             "~" => Self::LogicalNot,
+            "true" => Self::Value(true),
+            "false" => Self::Value(false),
             e => Self::Variable(e),
         }
     }
