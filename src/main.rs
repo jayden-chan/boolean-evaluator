@@ -6,7 +6,7 @@ use parser::{shunting_yard, Token};
 
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead};
 
 fn bit_at(num: usize, i: usize) -> bool {
     if i < std::mem::size_of::<usize>() {
@@ -35,17 +35,16 @@ fn main() -> Result<(), String> {
         exprs.push(shunting_yard(&line, &mut variables)?);
     }
 
-    println!("{:#?}", exprs);
-
     let mut variables = variables.into_iter().collect::<Vec<&str>>();
     variables.sort();
 
-    print!("│    ");
+    println!("");
+    print!("           ");
     for var in variables.iter() {
-        print!("│ {:5} ", var);
+        print!("│ \x1b[1;37m{:5}\x1b[0m ", var);
     }
     for i in 1..=exprs.len() {
-        print!("│ expr{:1} ", i);
+        print!("│ \x1b[1;37mexpr{:1}\x1b[0m ", i);
     }
     println!("│");
 
@@ -60,13 +59,15 @@ fn main() -> Result<(), String> {
             .map(|e| evaluate_postfix(e, &varmap).unwrap())
             .collect::<Vec<bool>>();
 
+        // If this row is invalid or not
         if eval_results[0..eval_results.len() - 1].iter().all(|r| *r)
             && !eval_results.last().unwrap()
         {
-            print!("\x1b[0;31m");
+            print!("│ {:2} │ \x1b[1;31m{:3}\x1b[0m ", i + 1, "ERR");
+        } else {
+            print!("│ {:2} │ \x1b[1;32m{:3}\x1b[0m ", i + 1, "OK");
         }
 
-        print!("│ {:2} ", i + 1);
         for var in variables.iter() {
             print!("│ {:5} ", varmap.get(*var).unwrap().to_string());
         }
