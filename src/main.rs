@@ -68,19 +68,16 @@ fn main() -> Result<(), String> {
         }
 
         for var in variables.iter() {
-            let result = varmap.get(*var).unwrap();
-            if *result {
-                print!("│ \x1b[32m{:5}\x1b[0m ", result);
-            } else {
-                print!("│ \x1b[31m{:5}\x1b[0m ", result);
+            match varmap.get(*var).unwrap() {
+                true => print!("│ \x1b[32m{:5}\x1b[0m ", "true"),
+                false => print!("│ \x1b[31m{:5}\x1b[0m ", "false"),
             }
         }
 
         for result in eval_results {
-            if result {
-                print!("│ \x1b[32m{:5}\x1b[0m ", result);
-            } else {
-                print!("│ \x1b[31m{:5}\x1b[0m ", result);
+            match result {
+                true => print!("│ \x1b[32m{:5}\x1b[0m ", result),
+                false => print!("│ \x1b[31m{:5}\x1b[0m ", result),
             }
         }
         println!("│");
