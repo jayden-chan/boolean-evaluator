@@ -2,7 +2,7 @@ mod evaluator;
 mod parser;
 
 use evaluator::{evaluate, Expr, Operator};
-use parser::{tokenize, Token};
+use parser::{shunting_yard, tokenize, Token};
 use std::collections::HashMap;
 
 fn bit_at(num: usize, i: usize) -> bool {
@@ -30,8 +30,8 @@ fn format_expr(expr: &Vec<Token>) -> String {
 }
 
 fn main() -> Result<(), String> {
-    let str_expr = "(A- >B   )&(  AvB)";
-    let (tokens, variables) = tokenize(str_expr)?;
+    let str_expr = "(A -> ~B) & (A v B)";
+    let (tokens, variables) = shunting_yard(str_expr)?;
     println!("Expr: {}", format_expr(&tokens));
     println!("{:#?}", tokens);
     println!("{:?}", variables);
