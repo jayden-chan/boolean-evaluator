@@ -22,17 +22,18 @@ fn main() -> Result<(), String> {
         return Err(String::from("Must specify a file."));
     }
 
-    let file = File::open(&args[1]).unwrap();
+    let file = File::open(&args[1]).expect("Failed to open file");
     let all_lines = io::BufReader::new(file)
         .lines()
         .filter_map(|e| e.ok())
         .collect::<Vec<String>>();
 
     let mut variables = HashSet::new();
+
     let exprs = all_lines
         .iter()
-        .map(|line| shunting_yard(line, &mut variables).unwrap())
-        .collect::<Vec<Vec<Token>>>();
+        .map(|line| shunting_yard(line, &mut variables))
+        .collect::<Result<Vec<Vec<Token>>, String>>()?;
 
     let mut variables = variables.into_iter().collect::<Vec<&str>>();
     variables.sort();
@@ -55,8 +56,8 @@ fn main() -> Result<(), String> {
 
         let eval_results = exprs
             .iter()
-            .map(|e| evaluate_postfix(e, &varmap).unwrap())
-            .collect::<Vec<bool>>();
+            .map(|e| evaluate_postfix(e, &varmap))
+            .collect::<Result<Vec<bool>, String>>()?;
 
         // If this row is invalid or not
         if eval_results[0..eval_results.len() - 1].iter().all(|r| *r)
