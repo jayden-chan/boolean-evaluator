@@ -38,7 +38,7 @@ fn main() -> Result<(), String> {
     variables.sort();
 
     println!("");
-    print!("           ");
+    print!("            ");
     for var in variables.iter() {
         print!("│ \x1b[1;37m{:5}\x1b[0m ", var);
     }
@@ -62,9 +62,9 @@ fn main() -> Result<(), String> {
         if eval_results[0..eval_results.len() - 1].iter().all(|r| *r)
             && !eval_results.last().unwrap()
         {
-            print!("│ {:2} │ \x1b[1;31m{:3}\x1b[0m ", i + 1, "ERR");
+            print!("│ {:3} │ \x1b[1;31m{:3}\x1b[0m ", i + 1, "ERR");
         } else {
-            print!("│ {:2} │ \x1b[1;32m{:3}\x1b[0m ", i + 1, "OK");
+            print!("│ {:3} │ \x1b[1;32m{:3}\x1b[0m ", i + 1, "OK");
         }
 
         for var in variables.iter() {
