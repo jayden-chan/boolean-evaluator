@@ -10,7 +10,11 @@ pub fn evaluate_postfix<'a>(
     for t in expr {
         match t {
             // Wow, this is kind of McFucked but I have no idea how else to write it
-            Token::Value(_) | Token::Variable(_) => operand_stack.push(*t),
+            Token::Value(_) => operand_stack.push(*t),
+            Token::Variable(v) => match vars.get(v) {
+                Some(s) => operand_stack.push(Token::Value(*s)),
+                None => return Err(format!("Variable '{}' is undefined", v))
+            },
             Token::LogicalOr | Token::LogicalAnd | Token::LogicalImp => {
                 let (left_value, right_value) = match (operand_stack.pop(), operand_stack.pop()) {
                     (Some(Token::Variable(r)), Some(Token::Variable(l))) => {
